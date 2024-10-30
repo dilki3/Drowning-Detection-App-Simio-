@@ -6,19 +6,39 @@
 //
 
 import SwiftUI
+import Firebase
+
 
 struct ContentView: View {
+    @EnvironmentObject var viewModel : AuthViewModel
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        Group {
+             
+            NavigationView {
+                if viewModel.userSession != nil {
+                    // Wrap in NavigationView if not done
+                    // DashboardView()  // Navigate to ProfileView when signed in
+                    
+                    if let role = viewModel.currentUser?.role {
+                        
+                        if role == "Swimmer" {
+                            ProfileView()
+                        } else if role == "Lifeguard" {
+                            MainTabView()
+                        }
+                    }
+                    
+                } else {
+                    WelcomeView()  // Show LoginView when not signed in
+                }
+            }
         }
-        .padding()
     }
 }
 
 #Preview {
-    ContentView()
+    
+        ContentView().environmentObject(AuthViewModel())
+    
 }
