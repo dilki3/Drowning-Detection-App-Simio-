@@ -114,13 +114,7 @@ struct SwimmerDashboard: View {
                      }
                  }
          }
-        .alert(isPresented: $showAlert) {
-                   Alert(
-                       title: Text("Drowning Alert"),
-                       message: Text("\(swimmer.fullname) is showing signs of drowning!"),
-                       dismissButton: .default(Text("OK"))
-                   )
-         }
+      
         .padding(.topInsets)
         .ignoresSafeArea()
         .navigationTitle("")

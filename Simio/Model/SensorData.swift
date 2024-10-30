@@ -15,7 +15,7 @@ struct SensorData: Identifiable, Codable {
     let heartRate: Int
     let spo2: Int
     let isDrowningDetected: Bool
-    let resolved: Bool
+    var resolved: Bool
     let timestamp: Date
 
     // Computed property to check if heart rate and SpO2 fall into potential risk or drowning alert categories
@@ -64,7 +64,7 @@ enum SwimmerState {
 
 // Example SensorData for preview/testing purposes
 extension SensorData {
-    static var MOCK_SENSOR_DATA = SensorData(id: "1", userId: "1", heartRate: 55, spo2: 88, isDrowningDetected: true, timestamp: Date())
+    static var MOCK_SENSOR_DATA = SensorData(id: "1", userId: "1", heartRate: 55, spo2: 88, isDrowningDetected: true, resolved: false, timestamp: Date())
 }
 
 

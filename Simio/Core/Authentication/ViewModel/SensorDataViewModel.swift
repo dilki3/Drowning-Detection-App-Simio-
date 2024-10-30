@@ -4,7 +4,6 @@
 //
 //  Created by Dila Dinesha on 2024-10-23.
 //
-
 import Foundation
 import Combine
 import FirebaseFirestore
@@ -75,38 +74,61 @@ class SensorDataViewModel: ObservableObject {
         }
 
         // Start real-time listener for new drowning alerts
-        func startListeningForNewDrowningAlerts() {
-            listener = db.collection("SensorData")
-                .whereField("isDrowningDetected", isEqualTo: true)
-                .addSnapshotListener { [weak self] (snapshot, error) in
-                    if let error = error {
-                        print("Error listening for drowning alerts: \(error)")
-                        return
-                    }
-                    
-                    for documentChange in snapshot?.documentChanges ?? [] {
-                        if documentChange.type == .added,
-                           let data = try? documentChange.document.data(as: SensorData.self) {
-                            
-                            // Fetch the swimmer's full name using the userId
-                            self?.fetchSwimmerFullName(swimmerId: data.userId) { fullName in
-                                DispatchQueue.main.async {
-                                    self?.showAlert = true
-                                    self?.alertMessage = "Drowning detected for Swimmer: \(fullName)"
-                                    // Store both the sensor data and full name in the history
-                                    self?.drowningAlertHistory.insert((sensorData: data, swimmerFullName: fullName), at: 0)
-                                }
+    func startListeningForNewDrowningAlerts() {
+        listener = db.collection("SensorData")
+            .whereField("isDrowningDetected", isEqualTo: true)
+            .whereField("resolved", isEqualTo: false) // Only listen for unresolved alerts
+            .addSnapshotListener { [weak self] (snapshot, error) in
+                if let error = error {
+                    print("Error listening for drowning alerts: \(error)")
+                    return
+                }
+                
+                guard let self = self else { return }
+
+                for documentChange in snapshot?.documentChanges ?? [] {
+                    if documentChange.type == .added,
+                       let data = try? documentChange.document.data(as: SensorData.self) {
+                        
+                        // Fetch the swimmer's full name using the userId
+                        self.fetchSwimmerFullName(swimmerId: data.userId) { fullName in
+                            DispatchQueue.main.async {
+                                self.showAlert = true
+                                self.alertMessage = "Drowning detected for Swimmer: \(fullName)"
+                                // Store the current sensor data to acknowledge later
+                                self.currentSensorData = data
                             }
                         }
                     }
                 }
-        }
+            }
+    }
+
 
         // Stop the listener when not needed
         func stopListeningForNewDrowningAlerts() {
             listener?.remove()
             listener = nil
         }
+    func acknowledgeAlert(for sensorData: SensorData) {
+        let sensorId = sensorData.id // Use the unique ID from the SensorData instance
+        
+        // Update the document in Firestore to set 'resolved' to true
+        db.collection("SensorData").document(sensorId).updateData(["resolved": true]) { error in
+            if let error = error {
+                print("Error acknowledging alert: \(error.localizedDescription)")
+            } else {
+                print("Alert acknowledged and resolved.")
+                // Update the local array to reflect the change
+                if let index = self.sensorData.firstIndex(where: { $0.id == sensorId }) {
+                    self.sensorData[index].resolved = true
+                }
+            }
+        }
+    }
+
+
+
 
         // Fetch entire history of drowning alerts
         func fetchDrowningAlertHistory() {

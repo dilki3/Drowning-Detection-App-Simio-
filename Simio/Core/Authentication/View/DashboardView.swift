@@ -181,20 +181,25 @@ struct DashboardView: View {
         .navigationBarHidden(true)
         //.ignoresSafeArea()
         .alert(isPresented: $sensorDataVM.showAlert) {
-                   Alert(
-                       title: Text("Drowning Alert"),
-                       message: Text(sensorDataVM.alertMessage),
-                       dismissButton: .default(Text("Acknowledge"), action: {
-                           sensorDataVM.showAlert = false
-                       })
-                   )
-               }
-               .onAppear {
-                   sensorDataVM.startListeningForNewDrowningAlerts() // Start listener when Dashboard appears
-               }
-               .onDisappear {
-                   sensorDataVM.stopListeningForNewDrowningAlerts() // Stop listener when Dashboard disappears
-               }
+            Alert(
+                title: Text("Drowning Alert"),
+                message: Text(sensorDataVM.alertMessage),
+                dismissButton: .default(Text("Acknowledge"), action: {
+                    // Acknowledge the alert using the current sensor data
+                    if let currentSensorData = sensorDataVM.currentSensorData {
+                        sensorDataVM.acknowledgeAlert(for: currentSensorData) // Acknowledge the alert
+                    }
+                })
+            )
+        }
+        .onAppear {
+            sensorDataVM.startListeningForNewDrowningAlerts() // Start listener when Dashboard appears
+        }
+        .onDisappear {
+            sensorDataVM.stopListeningForNewDrowningAlerts() // Stop listener when Dashboard disappears
+        }
+
+        
     }
 }
 
